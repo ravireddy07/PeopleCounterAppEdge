@@ -4,20 +4,19 @@ import time
 import socket
 import json
 import cv2
-
 import logging as log
 import paho.mqtt.client as mqtt
 
 from argparse import ArgumentParser
 from inference import Network
 
-HOSTNAME = socket.gethostname()
-IPADDRESS = socket.gethostbyname(HOSTNAME)
-MQTT_HOST = IPADDRESS
-MQTT_PORT = 3001
-MQTT_KEEPALIVE_INTERVAL = 60
+HostName = socket.gethostname()
+ipAddress = socket.gethostbyname(HostName)
+mqtt_host = ipAddress
+mqtt_port = 3001
+mqtt_break = 60
 
-def ssd_out(frame, result):
+def outputSSD(frame, result):
     current_count = 0
     for obj in result[0][0]:
         if obj[2] > prob_threshold:
@@ -40,7 +39,7 @@ def performance_counts(perf_count):
                                                           stats['status'],
                                                           stats['real_time']))
 
-def build_argparser():
+def buildd():
     parser = ArgumentParser()
     parser.add_argument("-m", "--model", required=True, type=str,
                         help="Path to an xml file with a trained model.")
@@ -63,7 +62,7 @@ def build_argparser():
 
 def connect_mqtt():
     client = mqtt.Client()
-    client.connect(MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE_INTERVAL)
+    client.connect(mqtt_host, mqtt_port, mqtt_break)
     return client
 
 
@@ -126,7 +125,7 @@ def infer_on_stream(args, client):
             result = infer_network.get_output(cur_request_id)
             perf_count = infer_network.performance_counter(cur_request_id)
 
-            frame, current_count = ssd_out(frame, result)
+            frame, current_count = outputSSD(frame, result)
             
             inf_time_message = "Inference time: {:.3f}ms"\
                                .format(det_time * 1000)
@@ -153,7 +152,7 @@ def infer_on_stream(args, client):
             cv2.imwrite('output_image.jpg', frame)
 
 def main():
-    args = build_argparser().parse_args()
+    args = buildd().parse_args()
     client = connect_mqtt()
     infer_on_stream(args, client)
 
